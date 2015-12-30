@@ -1,0 +1,22 @@
+{
+    "name": "nuwira/smsgw",
+    "description": "Nuwira SMS gateway client library",
+    "type": "library",
+    "require": {
+        "guzzlehttp/guzzle": "^6.1",
+        "illuminate/support": "^5.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nuwira\\Smsgw\\": "src/"
+        }
+    },
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Muhammad Zamroni",
+            "email": "zam@nuwira.co.id"
+        }
+    ],
+    "minimum-stability": "dev"
+}
