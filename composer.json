@@ -1,10 +1,11 @@
 {
     "name": "nuwira/smsgw",
-    "description": "Nuwira SMS gateway client library",
+    "description": "Nuwira SMS gateway client library for Laravel 5.x",
     "type": "library",
     "require": {
         "guzzlehttp/guzzle": "^6.1",
-        "illuminate/support": "^5.1"
+        "illuminate/support": "^5.1",
+        "matriphe/format": "^1.6"
     },
     "autoload": {
         "psr-4": {
