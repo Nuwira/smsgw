@@ -58,22 +58,22 @@ class Sms
             'access_token' => $token,
         ];
         
-        $response = $this->guzzle->post('api/v1/messages/new', [
-            'form_params' => $form_params
-        ]);
-        
-        if ($response->getStatusCode() == 401) {
+        try {
+            $response = $this->guzzle->post('api/v1/messages/new', [
+                'form_params' => $form_params
+            ]);
+            
+            $json = $response->getBody()->getContents();
+            
+            $data = json_decode($json);
+            $data = collect($data)->toArray();
+            
+            return $data;
+        } catch (GuzzleHttp\Exception\ClientException $e) {
             $token = $this->getToken(true);
             
             return $this->send($phone_number, $message);
         }
-        
-        $json = $response->getBody()->getContents();
-        
-        $data = json_decode($json);
-        $data = collect($data)->toArray();
-        
-        return $data;
     }
     
     public function check($message_id)
@@ -85,22 +85,22 @@ class Sms
             'access_token' => $token,
         ];
         
-        $response = $this->guzzle->get('api/v1/messages', [
-            'query' => $query
-        ]);
-        
-        if ($response->getStatusCode() == 401) {
+        try {
+            $response = $this->guzzle->get('api/v1/messages', [
+                'query' => $query
+            ]);
+            
+            $json = $response->getBody()->getContents();
+            
+            $data = json_decode($json);
+            $data = collect($data)->toArray();
+            
+            return $data;
+        } catch (GuzzleHttp\Exception\ClientException $e) {
             $token = $this->getToken(true);
             
-            return $this->send($phone_number, $message);
+            return $this->check($message_id);
         }
-        
-        $json = $response->getBody()->getContents();
-        
-        $data = json_decode($json);
-        $data = collect($data)->toArray();
-        
-        return $data;
     }
     
     public function getToken($force = false)
