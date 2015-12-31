@@ -9,6 +9,8 @@ use Matriphe\Format\Format;
 use Config;
 use Cache;
 
+use GuzzleHttp\Exception\ClientException;
+
 class Sms
 {
     protected $base_url = 'http://apisms.nuwira.net/';
@@ -69,7 +71,7 @@ class Sms
             $data = collect($data)->toArray();
             
             return $data;
-        } catch (GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             $this->token = $this->getToken(true);
             
             return $this->send($phone_number, $message);
@@ -96,7 +98,7 @@ class Sms
             $data = collect($data)->toArray();
             
             return $data;
-        } catch (GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             $this->token = $this->getToken(true);
             
             return $this->check($message_id);
