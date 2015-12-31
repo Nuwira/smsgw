@@ -70,7 +70,7 @@ class Sms
             
             return $data;
         } catch (GuzzleHttp\Exception\ClientException $e) {
-            $token = $this->getToken(true);
+            $this->token = $this->getToken(true);
             
             return $this->send($phone_number, $message);
         }
@@ -97,7 +97,7 @@ class Sms
             
             return $data;
         } catch (GuzzleHttp\Exception\ClientException $e) {
-            $token = $this->getToken(true);
+            $this->token = $this->getToken(true);
             
             return $this->check($message_id);
         }
@@ -105,7 +105,7 @@ class Sms
     
     public function getToken($force = false)
     {
-        if (empty($this->token)) {
+        if (empty($this->token) || $force) {
             $this->token = $this->loginGetAccessToken($force);
         }
         
