@@ -62,6 +62,12 @@ class Sms
             'form_params' => $form_params
         ]);
         
+        if ($response->getStatusCode() == 401) {
+            $token = $this->getToken(true);
+            
+            return $this->send($phone_number, $message);
+        }
+        
         $json = $response->getBody()->getContents();
         
         $data = json_decode($json);
@@ -83,6 +89,12 @@ class Sms
             'query' => $query
         ]);
         
+        if ($response->getStatusCode() == 401) {
+            $token = $this->getToken(true);
+            
+            return $this->send($phone_number, $message);
+        }
+        
         $json = $response->getBody()->getContents();
         
         $data = json_decode($json);
@@ -91,10 +103,10 @@ class Sms
         return $data;
     }
     
-    protected function getToken()
+    public function getToken($force = false)
     {
         if (empty($this->token)) {
-            $this->token = $this->loginGetAccessToken();
+            $this->token = $this->loginGetAccessToken($force);
         }
         
         return $this->token;
@@ -119,8 +131,12 @@ class Sms
         return $data;
     }
     
-    protected function loginGetAccessToken()
+    protected function loginGetAccessToken($force = false)
     {
+        if ($force) {
+            Cache::forget($this->cache_key);
+        }
+        
         if (Cache::has($this->cache_key)) {
             return Cache::get($this->cache_key);
         } else {
