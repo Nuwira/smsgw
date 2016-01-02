@@ -115,6 +115,11 @@ class Sms
         }
     }
     
+    public function isPretend()
+    {
+        return $this->pretend;
+    }
+    
     public function getToken($force = false)
     {
         if ($this->pretend) {
