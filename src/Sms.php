@@ -135,7 +135,7 @@ class Sms
     
     public function setPretend($pretend)
     {
-        $this->pretend = (bool) $pretend;
+        return $this->pretend = (bool) $pretend;
     }
     
     protected function pretendCheckToken()
@@ -189,7 +189,7 @@ class Sms
             $output = [
                 'status' => 200,
                 'message' => 'Detail of your message',
-                'data' => $message->except('message_id')->toArray(),
+                'data' => collect($message)->except(['message_id'])->toArray(),
             ];
         }
         
