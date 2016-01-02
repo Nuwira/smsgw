@@ -117,6 +117,10 @@ class Sms
     
     public function getToken($force = false)
     {
+        if ($this->pretend) {
+            return $this->pretendCheckToken();
+        }
+        
         if (empty($this->token) || $force) {
             $this->token = $this->loginGetAccessToken($force);
         }
@@ -127,6 +131,11 @@ class Sms
     public function setPretend($pretend)
     {
         $this->pretend = (bool) $pretend;
+    }
+    
+    protected function pretendCheckToken()
+    {
+        return 'thisIsJustAPretendingTokenTime'.strtotime('now');
     }
     
     protected function pretendSend($phone_number, $message)
