@@ -203,14 +203,18 @@ class Sms
             'client_secret' => $this->client_secret,
         ]);
         
-        $response = $this->guzzle->post('oauth/access_token', [
-            'form_params' => $form_params
-        ]);
-        
-        $json = $response->getBody()->getContents();
-        
-        $data = json_decode($json);
-        $data = collect($data)->toArray();
+        try {
+            $response = $this->guzzle->post('oauth/access_token', [
+                'form_params' => $form_params
+            ]);
+            
+            $json = $response->getBody()->getContents();
+            
+            $data = json_decode($json);
+            $data = collect($data)->toArray();
+        } catch (\Exception $e) {
+            return $e->getMessage();
+        }
         
         return $data;
     }
@@ -226,14 +230,18 @@ class Sms
         } else {
             $data = $this->login();
             
-            $token = $data['access_token'];
-            $expires = Carbon::parse(date('r', $data['expires']));
-            
-            if (!empty($token)) {
-                Cache::put($this->cache_key, $token, $expires);
+            try {
+                $token = $data['access_token'];
+                $expires = Carbon::parse(date('r', $data['expires']));
+                
+                if (!empty($token)) {
+                    Cache::put($this->cache_key, $token, $expires);
+                }
+                
+                return $token;
+            } catch (\Exception $e) {
+                return $e->getMessage();
             }
-            
-            return $token;
         }
     }
 }
