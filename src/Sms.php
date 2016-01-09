@@ -81,6 +81,8 @@ class Sms
             $this->token = $this->getToken(true);
             
             return $this->send($phone_number, $message);
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
         }
     }
     
@@ -112,6 +114,8 @@ class Sms
             $this->token = $this->getToken(true);
             
             return $this->check($message_id);
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage());
         }
     }
     
@@ -213,7 +217,7 @@ class Sms
             $data = json_decode($json);
             $data = collect($data)->toArray();
         } catch (\Exception $e) {
-            return $e->getMessage();
+            throw new \Exception($e->getMessage());
         }
         
         return $data;
@@ -240,7 +244,7 @@ class Sms
                 
                 return $token;
             } catch (\Exception $e) {
-                return $e->getMessage();
+                throw new \Exception($e->getMessage());
             }
         }
     }
