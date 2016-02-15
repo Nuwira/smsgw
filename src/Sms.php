@@ -137,6 +137,11 @@ class Sms
         return $this->token;
     }
     
+    public function getURL()
+    {
+        return $this->base_url;
+    }
+    
     public function setPretend($pretend)
     {
         return $this->pretend = (bool) $pretend;
