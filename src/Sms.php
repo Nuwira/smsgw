@@ -3,11 +3,12 @@
 namespace Nuwira\Smsgw;
 
 use GuzzleHttp\Client;
-use Carbon\Carbon;
-use Matriphe\Format\Format;
+use libphonenumber\PhoneNumberUtil;
+use libphonenumber\PhoneNumberFormat;
 
 use Config;
 use Cache;
+use Exception;
 
 use GuzzleHttp\Exception\ClientException;
 
@@ -20,11 +21,10 @@ class Sms
     
     protected $scope = [
         'grant_type' => 'client_credentials',
-        'scope' => 'admin',
+        'scope' => 'send,statistic,status',
     ];
     
     protected $guzzle;
-    protected $format;
     
     protected $token;
     protected $cache_key = 'nuwira_sms_access_token';
@@ -43,8 +43,6 @@ class Sms
             'base_uri' => $this->base_url,
             'timeout' => 30,
         ]);
-        
-        $this->format = new Format;
     }
     
     public function send($phone_number, $message)
@@ -53,7 +51,7 @@ class Sms
             return $this->pretendSend($phone_number, $message);
         }
         
-        $phone_number = $this->format->phone($phone_number);
+        $phone_number = $this->formatPhone($phone_number);
         
         $message = trim($message);
         $message = substr($message, 0, 160);
@@ -67,7 +65,7 @@ class Sms
         ];
         
         try {
-            $response = $this->guzzle->post('api/v1/messages/new', [
+            $response = $this->guzzle->post('api/v2/messages/send', [
                 'form_params' => $form_params
             ]);
             
@@ -81,8 +79,8 @@ class Sms
             $this->token = $this->getToken(true);
             
             return $this->send($phone_number, $message);
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage());
         }
     }
     
@@ -95,12 +93,11 @@ class Sms
         $token = $this->getToken();
         
         $query = [
-            'message_id' => $message_id,
             'access_token' => $token,
         ];
         
         try {
-            $response = $this->guzzle->get('api/v1/messages', [
+            $response = $this->guzzle->get('api/v2/messages/'.$message_id, [
                 'query' => $query
             ]);
             
@@ -114,8 +111,8 @@ class Sms
             $this->token = $this->getToken(true);
             
             return $this->check($message_id);
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage());
         }
     }
     
@@ -221,8 +218,8 @@ class Sms
             
             $data = json_decode($json);
             $data = collect($data)->toArray();
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage());
         }
         
         return $data;
@@ -241,16 +238,39 @@ class Sms
             
             try {
                 $token = $data['access_token'];
-                $expires = Carbon::parse(date('r', $data['expires']));
+                $expires_in_minutes = ($data['expires_in'] / 60);
                 
                 if (!empty($token)) {
-                    Cache::put($this->cache_key, $token, $expires);
+                    Cache::put($this->cache_key, $token, $expires_in_minutes);
                 }
                 
                 return $token;
-            } catch (\Exception $e) {
-                throw new \Exception($e->getMessage());
+            } catch (Exception $e) {
+                throw new Exception($e->getMessage());
             }
+        }
+    }
+    
+    protected function formatPhone($phone_number)
+    {
+        $locale = strtoupper(app()->getLocale());
+    
+        $phoneUtil = PhoneNumberUtil::getInstance();
+        
+        try {
+            $phone = $phoneUtil->parse($phone_number, $locale);
+            
+            $is_valid = $phoneUtil->isValidNumber($phone, $locale);
+            
+            if ($is_valid) {
+                return phone_format(
+                    $phone_number, $locale, PhoneNumberFormat::INTERNATIONAL
+                );
+            } else {
+                return $phone_number;
+            }    
+        } catch (Exception $e) {
+            return $phone_number;
         }
     }
 }
