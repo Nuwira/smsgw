@@ -59,7 +59,7 @@ class Sms
         $token = $this->getToken();
         
         $form_params = [
-            'phone_number' => $phone_number,
+            'phone' => $phone_number,
             'message' => $message,
             'access_token' => $token,
         ];
@@ -151,7 +151,7 @@ class Sms
     
     protected function pretendSend($phone_number, $message)
     {
-        $phone_number = $this->format->phone($phone_number);
+        $phone_number = formatPhone($phone_number);
         
         $message = trim($message);
         $message = substr($message, 0, 160);
@@ -160,20 +160,31 @@ class Sms
         $message_id = $inboxes->count();
         $message_id++;
         
-        $inboxes->push([
-            'message_id' => $message_id,
-            'message' => $message,
-            'phone_number' => $phone_number,
-            'sending_datetime' => date('Y-m-d H:i:s'),
-            'status' => 'Sent',
-        ]);
-        Cache::put($this->pretend_cache_key, $inboxes->toArray(), (60*60));
+        $sending_at = date('Y-m-d H:i:s');
         
         $output = [
             'status' => 200,
-            'message' => 'Your message has been queuing on outbox',
-            'message_id' => [$message_id],
+            'sms_id' => $message_id,
+            'destination' => $phone_number,
+            'message' => $message,
+            'is_long' => $is_long,
+            'sms_count' => $sms_count,
+            'character_count' => $message_length,
+            'message_status' => 'sent',
+            'delivery_status' => "Pesan terkirim ke ".$phone_number,
+            'note' => '',
+            'created_at' => $sending_at,
+            'delivered_at' => $sending_at,
+            'sender' => 'Pretender',
+            'app' => 'SMS Pretender',
         ];
+        
+        $inboxes->push($output);
+        Cache::put($this->pretend_cache_key, $inboxes->toArray(), (60*60));
+        
+        $message_length = strlen($message);
+        $is_long = ($message_length > 160 ? 1 : 0);
+        $sms_count = intval($is_long == 1 ? ceil($message_length / 153) : 1);
         
         return collect($output)->toArray();
     }
@@ -192,11 +203,7 @@ class Sms
                 'message' => 'Message not found',
             ];
         } else {
-            $output = [
-                'status' => 200,
-                'message' => 'Detail of your message',
-                'data' => collect($message)->except(['message_id'])->toArray(),
-            ];
+            $output = $message;
         }
         
         return collect($output)->toArray();
