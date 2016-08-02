@@ -54,7 +54,6 @@ class Sms
         $phone_number = $this->formatPhone($phone_number);
         
         $message = trim($message);
-        $message = substr($message, 0, 160);
         
         $token = $this->getToken();
         
