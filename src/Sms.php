@@ -289,15 +289,14 @@ class Sms
     private function default_user_agent()
     {
         $defaultAgent = 'NuwiraSmsgw/'.self::VERSION.' ';
-    
-        if (!$defaultAgent) {
-            $defaultAgent = 'GuzzleHttp/' . Client::VERSION;
-            if (extension_loaded('curl') && function_exists('curl_version')) {
-                $defaultAgent .= ' curl/' . \curl_version()['version'];
-            }
-            $defaultAgent .= ' PHP/' . PHP_VERSION;
+        $defaultAgent .= 'GuzzleHttp/' . Client::VERSION;
+        
+        if (extension_loaded('curl') && function_exists('curl_version')) {
+            $defaultAgent .= ' curl/' . \curl_version()['version'];
         }
-    
+        
+        $defaultAgent .= ' PHP/' . PHP_VERSION;
+        
         return $defaultAgent;
     }
 }
