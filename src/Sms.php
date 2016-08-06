@@ -14,6 +14,8 @@ use GuzzleHttp\Exception\ClientException;
 
 class Sms
 {
+    const VERSION = '2.2';
+    
     protected $base_url;
     protected $client_id;
     protected $client_secret;
@@ -42,6 +44,10 @@ class Sms
         $this->guzzle = new Client([
             'base_uri' => $this->base_url,
             'timeout' => 30,
+            'http_errors' => false,
+            'headers' => [
+                'user-agent' => $this->default_user_agent(),
+            ]
         ]);
     }
     
@@ -54,7 +60,6 @@ class Sms
         $phone_number = $this->formatPhone($phone_number);
         
         $message = trim($message);
-        $message = substr($message, 0, 160);
         
         $token = $this->getToken();
         
@@ -279,5 +284,19 @@ class Sms
         } catch (Exception $e) {
             return $phone_number;
         }
+    }
+    
+    private function default_user_agent()
+    {
+        $defaultAgent = 'NuwiraSmsgw/'.self::VERSION.' ';
+        $defaultAgent .= 'GuzzleHttp/' . Client::VERSION;
+        
+        if (extension_loaded('curl') && function_exists('curl_version')) {
+            $defaultAgent .= ' curl/' . \curl_version()['version'];
+        }
+        
+        $defaultAgent .= ' PHP/' . PHP_VERSION;
+        
+        return $defaultAgent;
     }
 }
