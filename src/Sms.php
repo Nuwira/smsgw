@@ -14,7 +14,7 @@ use GuzzleHttp\Exception\ClientException;
 
 class Sms
 {
-    const VERSION = '2.2';
+    const VERSION = '2.3';
     
     protected $base_url;
     protected $client_id;
@@ -59,7 +59,7 @@ class Sms
         
         $phone_number = $this->formatPhone($phone_number);
         
-        $message = trim($message);
+        //$message = trim($message);
         
         $token = $this->getToken();
         
