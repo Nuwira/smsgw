@@ -161,6 +161,10 @@ class Sms
         $message = trim($message);
         $message = substr($message, 0, 160);
         
+        $message_length = strlen($message);
+        $is_long = ($message_length > 160 ? 1 : 0);
+        $sms_count = intval($is_long == 1 ? ceil($message_length / 153) : 1);
+        
         $inboxes = collect(Cache::get($this->pretend_cache_key, []));
         $message_id = $inboxes->count();
         $message_id++;
@@ -186,10 +190,6 @@ class Sms
         
         $inboxes->push($output);
         Cache::put($this->pretend_cache_key, $inboxes->toArray(), (60*60));
-        
-        $message_length = strlen($message);
-        $is_long = ($message_length > 160 ? 1 : 0);
-        $sms_count = intval($is_long == 1 ? ceil($message_length / 153) : 1);
         
         return collect($output)->toArray();
     }
