@@ -156,7 +156,7 @@ class Sms
     
     protected function pretendSend($phone_number, $message)
     {
-        $phone_number = formatPhone($phone_number);
+        $phone_number = phone($phone_number, strtolower(Config::get('app.locale')));
         
         $message = trim($message);
         $message = substr($message, 0, 160);
