@@ -9,7 +9,6 @@ class SmsServiceProvider extends ServiceProvider
     /**
      * Bootstrap the application services.
      *
-     * @return void
      */
     public function boot()
     {
@@ -21,16 +20,15 @@ class SmsServiceProvider extends ServiceProvider
     /**
      * Register the application services.
      *
-     * @return void
      */
     public function register()
     {
         $this->mergeConfigFrom(
-            __DIR__ . '/config/sms.php', 'sms'
+            __DIR__.'/config/sms.php', 'sms'
         );
 
-        $this->app->bind('nuwira-sms', function() {
-            return new Sms;
+        $this->app->bind('nuwira-sms', function () {
+            return new Sms();
         });
     }
 }
