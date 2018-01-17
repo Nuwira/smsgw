@@ -1,7 +1,7 @@
 ## Installation
 
 ```console
-composer require nuwira/smsgw
+composer require nuwira/smsgw:~3.0
 ```
 
 ## Configuration
@@ -10,11 +10,11 @@ Open `config/app.php` add these lines:
 
 ```php
 'providers' => [
-	Nuwira\Smsgw\ServiceProvider::class,
+	Nuwira\Smsgw\SmsServiceProvider::class,
 ];
 
 'aliases' => [
-	'SMS' => Nuwira\Smsgw\Facade::class,
+	'SMS' => Nuwira\Smsgw\SmsFacade::class,
 ];
 ```
 
@@ -24,7 +24,7 @@ Open `config/app.php` add these lines:
 php artisan vendor:publish
 ```
 
-Open your `.env` file or `config/sms.php` and add your *client ID* and *client secret*
+Open your `.env` file or `config/sms.php` and add your *API Key* 
 
 ## Usage
 
@@ -39,5 +39,3 @@ To check, use this function:
 ```php
 SMS::check($message_id);
 ```
-
-All results is array.
