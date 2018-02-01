@@ -51,5 +51,5 @@ SMS::check($message_id);
 To check remaining credit, use this function:
 
 ```php
-SMS::check();
+SMS::credit();
 ```
