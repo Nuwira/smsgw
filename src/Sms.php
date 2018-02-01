@@ -82,6 +82,18 @@ class Sms
         }
     }
 
+    public function credit()
+    {
+        try {
+            $response = $this->guzzle->get('credit');
+            $data = $response->getBody();
+
+            return json_decode($data);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage());
+        }
+    }
+
     protected function formatPhone($phone_number)
     {
         $locale = strtoupper(app()->getLocale());
