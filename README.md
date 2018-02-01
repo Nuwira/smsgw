@@ -1,7 +1,7 @@
 ## Installation
 
 ```console
-composer require nuwira/smsgw:~3.0
+composer require nuwira/smsgw:~3.1
 ```
 
 Version 2.0 has been deprecated. Please don't use the version 2.0 or below.
