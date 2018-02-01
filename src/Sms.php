@@ -4,9 +4,9 @@ namespace Nuwira\Smsgw;
 
 use Exception;
 use GuzzleHttp\Client;
-use Illuminate\Support\Facades\Config;
 use libphonenumber\PhoneNumberFormat;
 use libphonenumber\PhoneNumberUtil;
+use Psr\Http\Message\ResponseInterface;
 
 class Sms
 {
@@ -14,106 +14,103 @@ class Sms
     protected $api_key;
     protected $to;
     protected $message;
+    protected $locale = 'ID';
 
-    public function __construct()
+    public function __construct(Client $guzzle)
     {
-        $this->base_url = Config::get('sms.base_url');
-        $this->api_key = Config::get('sms.api_key');
+        $this->guzzle = $guzzle;
+    }
 
-        $this->guzzle = new Client([
-            'base_uri' => $this->base_url,
-            'timeout' => 60,
-            'http_errors' => false,
-            'headers' => [
-                'Authorization' => 'Token '.$this->api_key,
-            ],
-        ]);
+    public function setLocale($locale)
+    {
+        $this->locale = strtoupper($locale);
+
+        return $this;
     }
 
     public function to($phone_number)
     {
-        $this->to = $phone_number;
+        $this->to = $this->formatPhone($phone_number);
 
         return $this;
     }
 
     public function text($message)
     {
-        $this->text = $message;
+        $this->text = trim($message);
 
         return $this;
     }
 
     public function send($phone_number = null, $message = null)
     {
-        $phone_number = ! empty($phone_number) ? $phone_number : $this->to;
-        $phone_number = $this->formatPhone($phone_number);
-
-        $message = ! empty($message) ? $message : $this->text;
-
-        try {
-            $response = $this->guzzle->post('/send', [
-                'form_params' => [
-                    'to' => $phone_number,
-                    'msg' => $message,
-                ],
-            ]);
-            $data = $response->getBody();
-
-            return json_decode($data);
-        } catch (Exception $e) {
-            throw new Exception($e->getMessage());
+        if (! empty($phone_number)) {
+            $this->to($phone_number);
         }
+
+        if (! empty($message)) {
+            $this->text($message);
+        }
+
+        if (empty($this->to) || empty($this->text)) {
+            throw new Exception('Phone number and message must be filled!');
+        }
+
+        $response = $this->guzzle->post('send', [
+            'form_params' => [
+                'to' => $phone_number,
+                'msg' => $message,
+            ],
+        ]);
+
+        return $this->parseResponse($response);
     }
 
-    public function check($message_id)
+    public function check($id)
     {
-        try {
-            $response = $this->guzzle->get('check/', [
-                'query' => [
-                    'id' => $message_id,
-                ],
-            ]);
-            $data = $response->getBody();
-
-            return json_decode($data);
-        } catch (Exception $e) {
-            throw new Exception($e->getMessage());
+        if (empty($id) || ! preg_match('/^(\d*)$/', $id)) {
+            throw new Exception('Correct ID must be provided!');
         }
+
+        $response = $this->guzzle->get('check', [
+            'query' => [
+                'id' => $id,
+            ],
+        ]);
+
+        return $this->parseResponse($response);
     }
 
     public function credit()
     {
-        try {
-            $response = $this->guzzle->get('credit');
-            $data = $response->getBody();
+        $response = $this->guzzle->get('credit');
 
-            return json_decode($data);
-        } catch (Exception $e) {
-            throw new Exception($e->getMessage());
-        }
+        return $this->parseResponse($response);
     }
 
     protected function formatPhone($phone_number)
     {
-        $locale = strtoupper(app()->getLocale());
+        $locale = strtoupper($this->locale);
 
         $phoneUtil = PhoneNumberUtil::getInstance();
 
         try {
             $phone = $phoneUtil->parse($phone_number, $locale);
 
-            $is_valid = $phoneUtil->isValidNumber($phone, $locale);
-
-            if ($is_valid) {
-                return phone_format(
-                    $phone_number, $locale, PhoneNumberFormat::INTERNATIONAL
-                );
+            if (! $phoneUtil->isValidNumber($phone)) {
+                return null;
             }
 
-            return $phone_number;
+            return $phoneUtil->format($phone, PhoneNumberFormat::INTERNATIONAL);
         } catch (Exception $e) {
-            return $phone_number;
+            return null;
         }
+    }
+
+    protected function parseResponse(ResponseInterface $response)
+    {
+        $data = $response->getBody();
+
+        return json_decode($data);
     }
 }

@@ -1,7 +1,7 @@
 ## Installation
 
 ```console
-composer require nuwira/smsgw:~3.1
+composer require nuwira/smsgw:~3.0
 ```
 
 Version 2.0 has been deprecated. Please don't use the version 2.0 or below.
@@ -46,4 +46,10 @@ To check, use this function:
 
 ```php
 SMS::check($message_id);
+```
+
+To check remaining credit, use this function:
+
+```php
+SMS::check();
 ```
