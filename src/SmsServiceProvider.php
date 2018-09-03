@@ -32,18 +32,18 @@ class SmsServiceProvider extends ServiceProvider
         $this->app->bind('nuwira-sms', function () {
             $baseUrl = Config::get('sms.base_url');
             $apiKey = Config::get('sms.api_key');
+            $locale = Config::get('app.locale');
 
             $guzzle = new Client([
                 'base_uri' => $baseUrl,
                 'timeout' => 60,
                 'http_errors' => true,
                 'headers' => [
-                    'Authorization' => 'Token '.$apiKey,
+                    'Authorization' => $apiKey,
                 ],
             ]);
 
-            $sms = new Sms($guzzle);
-            $sms->setLocale(app()->getLocale());
+            $sms = new Sms($guzzle, app()->getLocale());
 
             return $sms;
         });

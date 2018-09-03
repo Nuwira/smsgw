@@ -2,7 +2,6 @@
 
 namespace Nuwira\Smsgw\Tests;
 
-use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
 use Mockery;
@@ -16,7 +15,67 @@ class SmsTest extends TestCase
         parent::setUp();
 
         $this->guzzle = Mockery::mock(Client::class);
-        $this->sms = new Sms($this->guzzle);
+        $this->sms = new Sms($this->guzzle, 'id');
+    }
+
+    /**
+     * @test
+     */
+    public function auth_return_correct_values()
+    {
+        $result = '{
+            "token": "thetoken"
+          }';
+
+        $response = new Response(200, [], $result);
+
+        $this->guzzle->shouldReceive('post')->once()->andReturn($response);
+
+        $output = $this->sms->auth('username', 'password');
+
+        $this->assertSame('thetoken', $output->token);
+    }
+
+    /**
+     * @test
+     */
+    public function profile_return_correct_values()
+    {
+        $result = '{
+            "data": {
+              "username": "matriphe",
+              "name": "Muhammad Zamroni",
+              "email": "zam@nuwira.co.id"
+            }
+          }';
+
+        $response = new Response(200, [], $result);
+
+        $this->guzzle->shouldReceive('get')->once()->andReturn($response);
+
+        $output = $this->sms->profile();
+
+        $this->assertSame('matriphe', $output->data->username);
+        $this->assertSame('Muhammad Zamroni', $output->data->name);
+        $this->assertSame('zam@nuwira.co.id', $output->data->email);
+    }
+
+    /**
+     * @test
+     */
+    public function bulk_return_correct_values()
+    {
+        $result = '{
+            "message": "All messages are being queued."
+          }';
+
+        $response = new Response(200, [], $result);
+
+        $this->guzzle->shouldReceive('post')->once()->andReturn($response);
+
+        $output = $this->sms->bulk('[{"to":"081802596094","message":"Test"}]');
+
+        $this->assertSame('All messages are being queued.', $output->message);
     }
 
     /**
@@ -24,7 +83,15 @@ class SmsTest extends TestCase
      */
     public function credit_return_correct_values()
     {
-        $result = '{"credit":{"value":"779","activedate":"16 Februari 2018","text":"Success"}}';
+        $result = '{
+            "data": {
+              "date": "2018-09-03",
+              "credit": 394,
+              "used": 1,
+              "last": 2,
+              "updated_at": "2018-08-07 18:18:56"
+            }
+          }';
 
         $response = new Response(200, [], $result);
 
@@ -32,54 +99,105 @@ class SmsTest extends TestCase
 
         $credit = $this->sms->credit();
 
-        $this->assertSame('779', $credit->credit->value);
-        $this->assertSame('16 Februari 2018', $credit->credit->activedate);
-        $this->assertSame('Success', $credit->credit->text);
+        $this->assertSame('2018-09-03', $credit->data->date);
+        $this->assertSame(394, $credit->data->credit);
+        $this->assertSame(1, $credit->data->used);
+        $this->assertSame(2, $credit->data->last);
     }
 
     /**
      * @test
      */
-    public function check_return_correct_values()
+    public function received_return_correct_values()
     {
-        $result = '{"message":{"id":"12345","status":"Delivered"}}';
+        $result = '{
+            "data": [
+              {
+                "id": 1,
+                "message": "sebuah pembalasan",
+                "char_count": 17,
+                "sms_count": 1,
+                "is_long": false,
+                "created_at": "2018-08-07 16:08:27",
+                "updated_at": "2018-08-07 16:08:27",
+                "from": "0818-0259-6094",
+                "received_at": "2018-08-07 16:08:25",
+                "reply_to_id": 2
+              },
+              {
+                "id": 2,
+                "message": "tanpa tujuan",
+                "char_count": 12,
+                "sms_count": 1,
+                "is_long": false,
+                "created_at": "2018-08-07 15:39:21",
+                "updated_at": "2018-08-07 16:06:51",
+                "from": "0818-0259-6094",
+                "received_at": "2018-08-07 15:22:35",
+                "reply_to_id": 0
+              }
+            ],
+            "pagination": {
+              "total": 2,
+              "count": 2,
+              "per_page": 15,
+              "current_page": 1,
+              "total_pages": 1
+            }
+          }';
 
         $response = new Response(200, [], $result);
 
         $this->guzzle->shouldReceive('get')->once()->andReturn($response);
 
-        $check = $this->sms->check(12345);
+        $output = $this->sms->received();
 
-        $this->assertSame('12345', $check->message->id);
-        $this->assertSame('Delivered', $check->message->status);
+        $this->assertSame(2, $output->pagination->total);
+        $this->assertNotEmpty($output->data);
     }
 
     /**
      * @test
      */
-    public function check_return_exception_without_id()
+    public function received_id_return_correct_values()
     {
-        $this->guzzle->shouldReceive('get')->never();
+        $result = '{
+            "data": {
+              "id": 1,
+              "message": "sebuah pembalasan",
+              "char_count": 17,
+              "sms_count": 1,
+              "is_long": false,
+              "created_at": "2018-08-07 16:08:27",
+              "updated_at": "2018-08-07 16:08:27",
+              "from": "0818-0259-6094",
+              "received_at": "2018-08-07 16:08:25",
+              "reply_to_id": 2,
+              "replyTo": {
+                "id": 2,
+                "message": "pesan yang harus dibalas",
+                "char_count": 24,
+                "sms_count": 1,
+                "is_long": false,
+                "created_at": "2018-08-07 16:07:40",
+                "updated_at": "2018-08-07 16:07:49",
+                "to": "0818-0259-6094",
+                "status": "sent",
+                "in_queue": false,
+                "sent_at": "2018-08-07 16:07:49",
+                "replies_count": 1
+              }
+            }
+          }';
 
-        $this->expectExceptionObject(
-            new Exception('Correct ID must be provided!')
-        );
+        $response = new Response(200, [], $result);
 
-        $this->sms->check(null);
-    }
+        $this->guzzle->shouldReceive('get')->once()->andReturn($response);
 
-    /**
-     * @test
-     */
-    public function check_return_exception_with_unformatted_id()
-    {
-        $this->guzzle->shouldReceive('get')->never();
+        $output = $this->sms->receivedId(1);
 
-        $this->expectExceptionObject(
-            new Exception('Correct ID must be provided!')
-        );
-
-        $this->sms->check('abc');
+        $this->assertSame(1, $output->data->id);
+        $this->assertNotEmpty($output->data);
     }
 
     /**
@@ -87,81 +205,134 @@ class SmsTest extends TestCase
      */
     public function send_return_correct_values()
     {
-        $result = '{"message_id":"12345","phone_number":"081802596094","message":"sebuah test","status":"Sending"}';
+        $result = '{
+            "data": {
+              "id": 3,
+              "message": "sebuah pesan dikirim",
+              "char_count": 20,
+              "sms_count": 1,
+              "is_long": false,
+              "created_at": "2018-08-08 10:03:55",
+              "updated_at": "2018-08-08 10:03:55",
+              "to": "0818-0259-6094",
+              "status": "pending",
+              "in_queue": true,
+              "sent_at": "",
+              "replies_count": 0
+            },
+            "message": "SMS is successfuly queued."
+          }';
 
         $response = new Response(200, [], $result);
 
         $this->guzzle->shouldReceive('post')->once()->andReturn($response);
 
-        $send = $this->sms->send('081802596094', 'sebuah test');
+        $output = $this->sms->send('081802596094', 'sebuah pesan dikirim');
 
-        $this->assertSame('12345', $send->message_id);
-        $this->assertSame('081802596094', $send->phone_number);
-        $this->assertSame('sebuah test', $send->message);
-        $this->assertSame('Sending', $send->status);
+        $this->assertSame('SMS is successfuly queued.', $output->message);
+        $this->assertSame('0818-0259-6094', $output->data->to);
+        $this->assertSame('sebuah pesan dikirim', $output->data->message);
+        $this->assertSame('pending', $output->data->status);
     }
 
     /**
      * @test
      */
-    public function send_return_correct_values_implicityly_set_number_and_message()
+    public function sent_return_correct_values()
     {
-        $result = '{"message_id":"12345","phone_number":"081802596094","message":"sebuah test","status":"Sending"}';
+        $result = '{
+            "data": [
+              {
+                "id": 2,
+                "message": "pesan kedua",
+                "char_count": 11,
+                "sms_count": 1,
+                "is_long": false,
+                "created_at": "2018-08-07 16:07:40",
+                "updated_at": "2018-08-07 16:07:49",
+                "to": "0818-0259-6094",
+                "status": "sent",
+                "in_queue": false,
+                "sent_at": "2018-08-07 16:07:49",
+                "replies_count": 1
+              },
+              {
+                "id": 1,
+                "message": "pesan pertama",
+                "char_count": 13,
+                "sms_count": 1,
+                "is_long": false,
+                "created_at": "2018-08-07 12:38:09",
+                "updated_at": "2018-08-07 12:38:54",
+                "to": "0818-0259-6094",
+                "status": "",
+                "in_queue": false,
+                "sent_at": "2018-08-07 12:38:49",
+                "replies_count": 7
+              }
+            ],
+            "pagination": {
+              "total": 2,
+              "count": 2,
+              "per_page": 15,
+              "current_page": 1,
+              "total_pages": 1
+            }
+          }';
 
         $response = new Response(200, [], $result);
 
-        $this->guzzle->shouldReceive('post')->once()->andReturn($response);
+        $this->guzzle->shouldReceive('get')->once()->andReturn($response);
 
-        $this->sms->to('081802596094');
-        $this->sms->text('sebuah test');
-        $send = $this->sms->send();
+        $output = $this->sms->sent();
 
-        $this->assertSame('12345', $send->message_id);
-        $this->assertSame('081802596094', $send->phone_number);
-        $this->assertSame('sebuah test', $send->message);
-        $this->assertSame('Sending', $send->status);
+        $this->assertSame(2, $output->pagination->total);
+        $this->assertNotEmpty($output->data);
     }
 
     /**
      * @test
      */
-    public function send_return_exception_without_set_phone_number_or_message()
+    public function sent_id_return_correct_values()
     {
-        $this->guzzle->shouldReceive('post')->never();
+        $result = '{
+            "data": {
+              "id": 2,
+              "message": "pesan kedua",
+              "char_count": 11,
+              "sms_count": 1,
+              "is_long": false,
+              "created_at": "2018-08-07 16:07:40",
+              "updated_at": "2018-08-07 16:07:49",
+              "to": "0818-0259-6094",
+              "status": "sent",
+              "in_queue": false,
+              "sent_at": "2018-08-07 16:07:49",
+              "replies_count": 1,
+              "replies": [
+                {
+                  "id": 3,
+                  "message": "sebuah pembalasan",
+                  "char_count": 17,
+                  "sms_count": 1,
+                  "is_long": false,
+                  "created_at": "2018-08-07 16:08:27",
+                  "updated_at": "2018-08-07 16:08:27",
+                  "from": "0818-0259-6094",
+                  "received_at": "2018-08-07 16:08:25",
+                  "reply_to_id": 2
+                }
+              ]
+            }
+          }';
 
-        $this->expectExceptionObject(
-            new Exception('Phone number and message must be filled!')
-        );
+        $response = new Response(200, [], $result);
 
-        $this->sms->send();
-    }
+        $this->guzzle->shouldReceive('get')->once()->andReturn($response);
 
-    /**
-     * @test
-     */
-    public function send_return_exception_without_set_phone_number()
-    {
-        $this->guzzle->shouldReceive('post')->never();
+        $output = $this->sms->sentId(2);
 
-        $this->expectExceptionObject(
-            new Exception('Phone number and message must be filled!')
-        );
-
-        $this->sms->text('sebuah test');
-        $this->sms->send();
-    }
-
-    /**
-     * @test
-     */
-    public function send_return_exception_without_set_message()
-    {
-        $this->guzzle->shouldReceive('post')->never();
-
-        $this->expectExceptionObject(
-            new Exception('Phone number and message must be filled!')
-        );
-
-        $this->sms->send('081802596094');
+        $this->assertSame(2, $output->data->id);
+        $this->assertNotEmpty($output->data);
     }
 }
