@@ -66,10 +66,10 @@ class Sms
         return $this->parseResponse($response);
     }
 
-    public function received($start = null, $end = null, $search = null)
+    public function received($start = null, $end = null, $search = null, $page = 1)
     {
         $response = $this->guzzle->get('sms/received', [
-            'query' => compact('start', 'end', 'search'),
+            'query' => compact('start', 'end', 'search', 'page'),
         ]);
 
         return $this->parseResponse($response);
@@ -98,10 +98,10 @@ class Sms
         return $this->parseResponse($response);
     }
 
-    public function sent($start = null, $end = null, $status = null, $search = null)
+    public function sent($start = null, $end = null, $status = null, $search = null, $page = 1)
     {
         $response = $this->guzzle->get('sms/sent', [
-            'query' => compact('start', 'end', 'status', 'search'),
+            'query' => compact('start', 'end', 'status', 'search', 'page'),
         ]);
 
         return $this->parseResponse($response);
