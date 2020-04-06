@@ -10,8 +10,8 @@
     ],
     "require": {
         "giggsey/libphonenumber-for-php": "~8.0",
-        "guzzlehttp/guzzle": "~6.0",
-        "illuminate/support": "~5.0"
+        "guzzlehttp/guzzle": "~6.3",
+        "illuminate/support": "~5.8"
     },
     "require-dev": {
         "mockery/mockery": "^1.0",
@@ -27,7 +27,7 @@
             "Nuwira\\Smsgw\\Tests\\": "tests/"
         }
     },
-    "config":{  
+    "config":{
         "preferred-install": "dist",
         "sort-packages": true
     },
