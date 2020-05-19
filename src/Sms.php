@@ -82,7 +82,7 @@ class Sms
         return $this->parseResponse($response);
     }
 
-    public function send($to = null, $message = null)
+    public function send($to = null, $message = null, $via = null)
     {
         if (empty($to) || empty($message)) {
             throw new Exception('Phone number and message must be filled!');
@@ -92,6 +92,7 @@ class Sms
             'form_params' => [
                 'to' => $to,
                 'message' => $message,
+                'via' => $via
             ],
         ]);
 
